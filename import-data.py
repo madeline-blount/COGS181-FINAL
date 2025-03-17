@@ -19,7 +19,6 @@ df = pd.read_csv("balanced_train_segments.csv",
                  dtype=str,  # Ensure all columns are treated as strings
                  skipinitialspace=True)  # Remove leading/trailing spaces
 
-print(df.head())
 
 # Drop any rows where YTID is clearly incorrect (e.g., if it contains numbers)
 df = df[df['YTID'].str.match(r'^[a-zA-Z0-9_-]{11}$', na=False)]  
@@ -33,4 +32,8 @@ df['youtube_url'] = "https://www.youtube.com/watch?v=" + df['YTID']
 
 # Verify output
 print(df[['YTID', 'youtube_url']].head())
+
+df.to_csv("cleaned_train_segments.csv", index=False)
+
+print(df.head())
 
