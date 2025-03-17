@@ -4,7 +4,8 @@ import yt_dlp
 from pydub import AudioSegment
 
 # Load your dataset
-df = pd.read_csv("balanced_train_segments.csv")
+df_babbling = pd.read_csv("cleaned_babbling_train_segments.csv", dtype=str)
+print(df_babbling.head())  # Verify that the data loads correctly
 
 # Make sure directory exists
 output_dir = "audio_clips"
@@ -44,5 +45,5 @@ def download_audio(youtube_id, start_time, end_time, output_dir):
         print(f"Failed to download {youtube_id}: {e}")
 
 # Loop through dataset and download clips
-for _, row in df.iterrows():
+for _, row in df_babbling.iterrows():
     download_audio(row['YTID'], row['start_seconds'], row['end_seconds'], output_dir)
