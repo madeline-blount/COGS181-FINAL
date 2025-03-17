@@ -9,22 +9,28 @@ import re
 # Manually define column names
 column_names = ['YTID', 'start_seconds', 'end_seconds', 'positive_labels']
 
-# Try reading the file with additional flexibility
+# Read CSV safely, ensuring proper column alignment
 df = pd.read_csv("balanced_train_segments.csv", 
                  comment="#", 
-                 header=1, 
-                 names=column_names, 
-                 sep=',',  # Ensure comma as delimiter
-                 quotechar='"',  # Handle quoted fields
-                 on_bad_lines='skip')  # Skip lines with too many fields
+                 names=column_names,  # Explicitly assign column names
+                 sep=',',  # Force comma as delimiter
+                 quotechar='"',  # Handle quoted fields correctly
+                 on_bad_lines='skip',  # Skip malformed lines
+                 dtype=str,  # Ensure all columns are treated as strings
+                 skipinitialspace=True)  # Remove leading/trailing spaces
 
-# Clean up any extra spaces in the 'positive_labels' column
-df['positive_labels'] = df['positive_labels'].apply(lambda x: re.sub(r'\s+', ' ', str(x)).strip())
-
-# Handle NaN values by filling them with an empty string (or you could use another strategy)
-df['positive_labels'] = df['positive_labels'].fillna('')
-
-# Show the cleaned data
 print(df.head())
 
+# Drop any rows where YTID is clearly incorrect (e.g., if it contains numbers)
+df = df[df['YTID'].str.match(r'^[a-zA-Z0-9_-]{11}$', na=False)]  
+
+# Ensure YTID is correctly extracted and stripped of spaces
+# Clean YTID: Remove any leading dashes and ensure valid YouTube IDs
+df['YTID'] = df['YTID'].str.strip().str.lstrip('-')
+
+# Generate YouTube URLs
+df['youtube_url'] = "https://www.youtube.com/watch?v=" + df['YTID']
+
+# Verify output
+print(df[['YTID', 'youtube_url']].head())
 
