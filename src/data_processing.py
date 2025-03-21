@@ -58,6 +58,39 @@ def process_spectrograms_and_labels(spectrogram_dir, df):
     
     return X, y
 
+
+def process_mfccs_and_labels(mfcc_dir, df):
+    X = []
+    y = []
+    missing_samples = 0
+
+    # Loop through the MFCC images
+    for filename in os.listdir(mfcc_dir):
+        if filename.endswith(".png"):  # Assuming MFCC images are also saved as .png
+            file_id = filename.replace("_trimmed.png", "")  # Adjust according to your filename pattern
+            label_row = df[df["video"].str.contains(file_id, case=False, na=False)]
+            
+            if label_row.empty:
+                missing_samples += 1
+                print(f"No matching label found for file: {file_id}")
+            else:
+                mfcc_path = os.path.join(mfcc_dir, filename)
+                mfcc_image = cv2.imread(mfcc_path, cv2.IMREAD_GRAYSCALE)  # Load as grayscale image
+
+                # Resize to the input shape expected by the CNN
+                mfcc_image = cv2.resize(mfcc_image, (128, 128))  # Resize to match your model input
+                mfcc_image = mfcc_image / 255.0  # Normalize the pixel values to [0, 1]
+
+                X.append(mfcc_image)
+                y.append(label_row["emotion_labels"].values[0])  # Ensure this points to the correct label column
+
+    print(f"Missing samples: {missing_samples}")
+    X = np.array(X).reshape(-1, 128, 128, 1)  # Add the channel dimension
+    y = np.array(y)
+
+    return X, y
+
+
 def split_and_preprocess_data(X, y, num_classes):
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
