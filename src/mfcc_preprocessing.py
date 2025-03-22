@@ -22,8 +22,8 @@ def apply_vad(audio_data, sample_rate):
     # Convert audio to 16-bit PCM (int16) for VAD
     audio_data_resampled = (audio_data_resampled * 32767).astype(np.int16)
     
-    # Initialize WebRTC VAD (mode 1 is mild aggressiveness)
-    vad = webrtcvad.Vad(1)
+    # Initialize WebRTC VAD )
+    vad = webrtcvad.Vad(0)
     
     # Set frame size (20 ms frames at 16 kHz)
     frame_duration = 20  # in milliseconds
@@ -36,19 +36,28 @@ def apply_vad(audio_data, sample_rate):
 
     # Split the audio into frames (each frame has `frame_size` samples)
     frames = [audio_data_resampled[i:i + frame_size] for i in range(0, len(audio_data_resampled), frame_size)]
+    speech_frames = [frame for frame in frames if vad.is_speech(frame.tobytes(), 16000)]
 
+    if not speech_frames:
+        print("⚠️ No speech detected in this audio file. Replacing with silence.")
+        return np.zeros_like(audio_data_resampled, dtype=np.float32)
+    
+    vad_audio = np.concatenate(speech_frames).astype(np.float32) / 32767.0
+    return vad_audio
+
+    
     # Apply VAD to each frame (check if it's speech)
-    speech_frames = []
-    for frame in frames:
-        # Convert frame to bytes and apply VAD
-        if vad.is_speech(frame.tobytes(), 16000):
-            speech_frames.append(frame)
+    #speech_frames = []
+    #for frame in frames:
+     #   # Convert frame to bytes and apply VAD
+     #   if vad.is_speech(frame.tobytes(), 16000):
+     #       speech_frames.append(frame)
     
     # Combine speech frames into one array
-    vad_audio = np.concatenate(speech_frames)
+    #vad_audio = np.concatenate(speech_frames)
 
     # Convert the resulting audio back to float32
-    vad_audio = vad_audio.astype(np.float32) / 32767.0  # Normalize back to float range
+    #vad_audio = vad_audio.astype(np.float32) / 32767.0  # Normalize back to float range
 
     return vad_audio
 
@@ -94,8 +103,16 @@ for filename in os.listdir(audio_dir):
         output_audio_path = os.path.join(processed_dir, filename)
         output_mfcc_path = os.path.join(mfcc_dir, filename.replace(".wav", ".png"))
 
-        print(f"Processing {filename}...")
-        processed_audio, sr = process_audio(input_path, output_audio_path)
-        save_mfcc(processed_audio, sr, output_mfcc_path)
+        #print(f"Processing {filename}...")
+        #processed_audio, sr = process_audio(input_path, output_audio_path)
+        #save_mfcc(processed_audio, sr, output_mfcc_path)
+
+        print(f"🔄 Processing {filename}...")
+        try:
+            processed_audio, sr = process_audio(input_path, output_audio_path)
+            save_mfcc(processed_audio, sr, output_mfcc_path)
+            print(f"✅ Finished: {filename}")
+        except Exception as e:
+            print(f"❌ Error processing {filename}: {e}")
 
 print("Preprocessing complete!")
