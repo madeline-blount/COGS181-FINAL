@@ -23,7 +23,7 @@ def apply_vad(audio_data, sample_rate):
     audio_data_resampled = (audio_data_resampled * 32767).astype(np.int16)
     
     # Initialize WebRTC VAD (mode 1 is mild aggressiveness)
-    vad = webrtcvad.Vad(1)
+    vad = webrtcvad.Vad(0)
     
     # Set frame size (20 ms frames at 16 kHz)
     frame_duration = 20  # in milliseconds
